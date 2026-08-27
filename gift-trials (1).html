@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Complete the Trials</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cinzel+Decorative:wght@700&family=Press+Start+2P&family=Quicksand:wght@400;500;600;700&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --purple-deep:#150826;
+    --purple-mid:#33144f;
+    --purple-glow:#5b2a86;
+    --maroon:#3e0f1e;
+    --maroon-light:#7a1f33;
+    --gold:#e3bd5e;
+    --gold-bright:#f7dd93;
+    --cream:#fbf3df;
+    --white:#f5eefc;
+    --glass:rgba(255,255,255,0.06);
+    --glass-border:rgba(227,189,94,0.45);
+    --ease-cozy:cubic-bezier(.4,0,.2,1);
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;height:100%;width:100%;
+    overflow-x:hidden;
+    background:var(--purple-deep);
+    color:var(--white);
+    font-family:'Quicksand',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  body{min-height:100vh;position:relative;}
+
+  /* ---------- ANIMATED BACKGROUND ---------- */
+  #bg{position:fixed;inset:0;z-index:0;overflow:hidden;background:
+      radial-gradient(circle at 20% 30%, #2a1245 0%, transparent 55%),
+      radial-gradient(circle at 80% 70%, #3e0f2a 0%, transparent 55%),
+      linear-gradient(160deg,var(--purple-deep) 0%, #1d0a33 45%, var(--maroon) 100%);
+  }
+  .blob{position:absolute;border-radius:50%;filter:blur(70px);opacity:0.55;mix-blend-mode:screen;}
+  .blob1{width:46vw;height:46vw;background:radial-gradient(circle,#8a4fd1,transparent 70%);top:-10%;left:-10%;animation:float1 26s ease-in-out infinite;}
+  .blob2{width:38vw;height:38vw;background:radial-gradient(circle,#c94b6f,transparent 70%);bottom:-12%;right:-8%;animation:float2 32s ease-in-out infinite;}
+  .blob3{width:30vw;height:30vw;background:radial-gradient(circle,#5b2a86,transparent 70%);top:40%;left:55%;animation:float3 22s ease-in-out infinite;}
+  .blob4{width:26vw;height:26vw;background:radial-gradient(circle,#e3bd5e,transparent 72%);opacity:0.18;top:10%;right:15%;animation:float2 38s ease-in-out infinite reverse;}
+  @keyframes float1{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(6vw,8vh) scale(1.12);}}
+  @keyframes float2{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(-7vw,-6vh) scale(1.08);}}
+  @keyframes float3{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(-5vw,7vh) scale(0.9);}}
+
+  .sparkle{position:absolute;border-radius:50%;background:var(--gold-bright);box-shadow:0 0 8px 2px var(--gold-bright);animation:twinkle linear infinite;}
+  @keyframes twinkle{0%,100%{opacity:0;transform:scale(0.4);}50%{opacity:0.9;transform:scale(1);}}
+  @keyframes drift{0%{transform:translateY(0);}100%{transform:translateY(-40px);}}
+
+  .watermark{position:fixed;bottom:14px;right:18px;z-index:50;font-family:'Press Start 2P',monospace;font-size:9px;letter-spacing:1px;color:var(--gold);opacity:0.55;text-shadow:0 0 6px rgba(227,189,94,0.4);pointer-events:none;}
+
+  /* ---------- PROGRESS DOTS ---------- */
+  #progress-dots{position:fixed;top:22px;left:50%;transform:translateX(-50%);display:none;gap:12px;z-index:40;}
+  #progress-dots.show{display:flex;}
+  .dot{width:11px;height:11px;border-radius:50%;background:rgba(255,255,255,0.15);border:1.5px solid var(--glass-border);transition:all .5s var(--ease-cozy);}
+  .dot.done{background:var(--gold);box-shadow:0 0 8px var(--gold);}
+  .dot.current{background:var(--gold-bright);box-shadow:0 0 12px var(--gold-bright);transform:scale(1.3);}
+
+  /* ---------- STAGE / SCREENS ---------- */
+  #stage{position:relative;z-index:5;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:90px 18px 60px;}
+  .screen{
+    display:none;
+    width:100%;max-width:620px;
+    opacity:0;transform:translateY(18px) scale(0.97);
+    transition:opacity .7s var(--ease-cozy), transform .7s var(--ease-cozy);
+  }
+  .screen.active{display:block;opacity:1;transform:translateY(0) scale(1);}
+  .screen.leaving{opacity:0;transform:translateY(-14px) scale(0.97);}
+
+  .card{
+    background:var(--glass);
+    backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+    border:1px solid var(--glass-border);
+    border-radius:22px;
+    padding:44px 36px;
+    box-shadow:0 8px 40px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.08);
+    position:relative;
+    overflow:hidden;
+  }
+  .card::before{
+    content:'';position:absolute;inset:0;border-radius:22px;padding:1px;
+    background:linear-gradient(120deg, rgba(227,189,94,0.7), rgba(227,189,94,0) 30%, rgba(227,189,94,0) 70%, rgba(227,189,94,0.7));
+    -webkit-mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite:xor; mask-composite:exclude;
+    animation:borderShimmer 6s linear infinite;
+    pointer-events:none;
+  }
+  @keyframes borderShimmer{0%{opacity:0.4;}50%{opacity:1;}100%{opacity:0.4;}}
+
+  h1,h2,h3{font-family:'Cinzel',serif;font-weight:600;letter-spacing:0.5px;margin:0 0 14px;color:var(--gold-bright);text-shadow:0 0 18px rgba(227,189,94,0.25);}
+  .eyebrow{font-family:'Press Start 2P',monospace;font-size:10px;color:var(--gold);opacity:0.75;letter-spacing:1px;margin-bottom:16px;display:block;}
+  p{line-height:1.6;color:var(--cream);opacity:0.92;}
+
+  .btn{
+    font-family:'Quicksand',sans-serif;font-weight:700;font-size:16px;
+    padding:14px 30px;border-radius:14px;border:1.5px solid var(--gold);
+    background:linear-gradient(160deg, rgba(227,189,94,0.18), rgba(122,31,51,0.35));
+    color:var(--gold-bright);cursor:pointer;
+    transition:transform .35s var(--ease-cozy), box-shadow .35s var(--ease-cozy), background .35s;
+    box-shadow:0 4px 18px rgba(0,0,0,0.35);
+  }
+  .btn:hover{transform:translateY(-3px) scale(1.03);box-shadow:0 8px 26px rgba(227,189,94,0.35);background:linear-gradient(160deg, rgba(227,189,94,0.3), rgba(122,31,51,0.45));}
+  .btn:active{transform:translateY(0) scale(0.98);}
+  .btn-row{display:flex;gap:16px;flex-wrap:wrap;margin-top:26px;}
+
+  input[type=text]{
+    width:100%;padding:14px 16px;border-radius:12px;border:1.5px solid var(--glass-border);
+    background:rgba(255,255,255,0.07);color:var(--white);font-family:'Quicksand',sans-serif;font-size:16px;
+    outline:none;margin-top:8px;transition:box-shadow .3s, border-color .3s;
+  }
+  input[type=text]:focus{border-color:var(--gold-bright);box-shadow:0 0 0 3px rgba(227,189,94,0.2);}
+
+  /* ---------- LANDING ---------- */
+  #landing .card{text-align:center;}
+  #landing h1{font-family:'Cinzel Decorative',serif;font-size:clamp(26px,5vw,36px);}
+  .name-field{margin:26px 0 8px;text-align:left;}
+  .name-field label{font-family:'Caveat',cursive;font-size:22px;color:var(--gold-bright);}
+  .hint{font-family:'Caveat',cursive;font-size:19px;color:var(--cream);opacity:0.8;margin-top:6px;}
+
+  /* ---------- DOORS ---------- */
+  #doors{position:fixed;inset:0;z-index:60;display:none;}
+  #doors.show{display:block;}
+  .door{position:absolute;top:0;bottom:0;width:50%;background:
+      linear-gradient(90deg, var(--maroon-light), var(--maroon) 60%, #260812);
+      box-shadow:inset 0 0 60px rgba(0,0,0,0.6);
+      border:2px solid rgba(227,189,94,0.5);
+      display:flex;align-items:center;justify-content:center;
+      transition:transform 2.1s cubic-bezier(.75,0,.15,1);
+  }
+  .door.left{left:0;border-right:2px solid var(--gold);transform-origin:left;}
+  .door.right{right:0;border-left:2px solid var(--gold);transform-origin:right;}
+  .door.open.left{transform:translateX(-102%);}
+  .door.open.right{transform:translateX(102%);}
+  .door-emblem{font-family:'Cinzel Decorative',serif;color:var(--gold);font-size:15vw;opacity:0.35;}
+
+  /* ---------- TRIAL 1 ---------- */
+  .choice-col{display:flex;flex-direction:column;gap:16px;margin-top:26px;}
+  .choice-btn{
+    text-align:left;padding:18px 20px;border-radius:16px;border:1.5px solid var(--glass-border);
+    background:rgba(255,255,255,0.05);color:var(--white);font-family:'Quicksand',sans-serif;font-weight:600;font-size:16px;
+    cursor:pointer;transition:all .4s var(--ease-cozy);
+  }
+  .choice-btn:hover{border-color:var(--gold-bright);background:rgba(227,189,94,0.12);transform:translateX(6px);}
+
+  /* ---------- TRIAL 2 ---------- */
+  .duel-zone{position:relative;height:280px;margin-top:20px;border-radius:16px;border:1px dashed rgba(227,189,94,0.3);overflow:hidden;background:rgba(0,0,0,0.15);}
+  #yesBtn{position:absolute;left:50%;top:65%;transform:translate(-50%,-50%) scale(1);font-size:18px;padding:16px 34px;transition:transform .5s var(--ease-cozy);}
+  #noBtn{position:absolute;left:20%;top:30%;transform:translate(-50%,-50%) scale(1);transition:left .4s ease, top .4s ease, transform .4s ease, opacity .4s ease;}
+
+  /* ---------- TRIAL 3 ---------- */
+  .quiz-block{margin-top:22px;padding-top:18px;border-top:1px solid rgba(227,189,94,0.2);}
+  .quiz-block:first-of-type{border-top:none;padding-top:0;}
+  .stars{display:flex;gap:8px;margin-top:10px;font-size:30px;}
+  .star{cursor:pointer;filter:grayscale(1) brightness(0.7);transition:transform .25s, filter .25s;}
+  .star:hover{transform:scale(1.15);}
+  .stars.locked .star{cursor:default;pointer-events:none;}
+  .stars.locked .star.filled{filter:none;text-shadow:0 0 10px var(--gold-bright);}
+  .break-heart{display:inline-block;margin-left:10px;font-size:22px;opacity:0;position:relative;top:2px;}
+  .break-heart.play{animation:heartbreak 1.4s ease forwards;}
+  @keyframes heartbreak{0%{opacity:0;transform:scale(0.5) rotate(0);}25%{opacity:1;transform:scale(1.3) rotate(-8deg);}45%{transform:scale(1) rotate(6deg);}70%{transform:scale(1) translateY(4px) rotate(-3deg);}100%{opacity:0.85;transform:scale(0.9) translateY(10px) rotate(4deg);}}
+  .annoy-row{display:flex;gap:16px;margin-top:14px;}
+
+  /* ---------- TRIAL 4 (loading) ---------- */
+  #trial4 .card{text-align:center;}
+  .loadbar-outer{width:100%;height:22px;border-radius:12px;background:rgba(255,255,255,0.08);border:1px solid var(--glass-border);overflow:hidden;margin-top:26px;}
+  .loadbar-inner{height:100%;width:0%;border-radius:12px;background:linear-gradient(90deg,var(--gold),var(--gold-bright));box-shadow:0 0 14px var(--gold-bright);transition:width .4s linear;}
+  #loadPct{font-family:'Press Start 2P',monospace;font-size:22px;color:var(--gold-bright);margin-top:16px;display:block;}
+  #loadLabel{font-family:'Caveat',cursive;font-size:20px;color:var(--cream);}
+
+  #jumpscare{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;pointer-events:none;}
+  #jumpscare.show{display:flex;}
+  .jump-emoji{font-size:min(28vw,220px);animation:jumpIn .35s cubic-bezier(.36,1.9,.5,1) forwards, jumpShake 0.5s ease-in-out 0.35s 3;filter:drop-shadow(0 0 30px rgba(0,0,0,0.6));}
+  @keyframes jumpIn{0%{transform:scale(0.2) rotate(-10deg);opacity:0;}70%{transform:scale(1.15) rotate(4deg);opacity:1;}100%{transform:scale(1) rotate(0);opacity:1;}}
+  @keyframes jumpShake{0%,100%{transform:translateX(0) rotate(0);}25%{transform:translateX(-8px) rotate(-3deg);}75%{transform:translateX(8px) rotate(3deg);}}
+  .speech-bubble{position:absolute;bottom:100%;left:50%;margin-bottom:22px;transform:translateX(-50%);background:var(--white);color:#2a0a14;font-family:'Cinzel',serif;font-weight:700;font-size:22px;padding:12px 22px;border-radius:16px;opacity:0;z-index:5;white-space:nowrap;box-shadow:0 6px 20px rgba(0,0,0,0.4);animation:bubbleIn .4s ease .5s forwards, bubbleOut .5s ease 4.6s forwards;}
+  .speech-bubble::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border-width:12px 10px 0 10px;border-style:solid;border-color:var(--white) transparent transparent transparent;}
+  .jump-emoji{z-index:1;position:relative;}
+  @keyframes bubbleIn{from{opacity:0;transform:translate(-50%,10px) scale(0.8);}to{opacity:1;transform:translate(-50%,0) scale(1);}}
+  @keyframes bubbleOut{from{opacity:1;}to{opacity:0;}}
+
+  /* ---------- TRIAL 5 (vault) ---------- */
+  #trial5 .card{text-align:center;}
+  .lock-wrap{margin:22px auto 8px;font-size:70px;transition:transform .4s;}
+  .lock-wrap.unlocked{animation:lockPop .6s ease;}
+  @keyframes lockPop{0%{transform:scale(1) rotate(0);}40%{transform:scale(1.3) rotate(-8deg);}70%{transform:scale(1.1) rotate(5deg);}100%{transform:scale(1) rotate(0);}}
+  .vault-grid{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:14px;
+    max-width:420px;margin:26px auto 0;padding:0;
+  }
+  .key-btn{
+    aspect-ratio:1/1;border-radius:14px;border:1.5px solid var(--glass-border);
+    background:rgba(255,255,255,0.06);font-size:26px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:transform .25s var(--ease-cozy), border-color .25s, background .25s;
+  }
+  .key-btn:hover{transform:translateY(-3px) scale(1.06);border-color:var(--gold-bright);background:rgba(227,189,94,0.12);}
+  .key-btn.wrong{animation:shakeKey .45s ease;border-color:#c94b4b;background:rgba(201,75,75,0.18);}
+  .key-btn.correct{border-color:var(--gold-bright);background:rgba(227,189,94,0.35);box-shadow:0 0 18px var(--gold-bright);}
+  @keyframes shakeKey{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+
+  /* ---------- FINALE ---------- */
+  #finale .card{text-align:center;}
+  .final-line{font-family:'Caveat',cursive;font-size:clamp(34px,7vw,54px);color:var(--gold-bright);margin:18px 0 6px;text-shadow:0 0 24px rgba(247,221,147,0.5);}
+  .final-line span{display:inline-block;opacity:0;transform:translateY(14px);animation:letterIn .6s ease forwards;}
+  @keyframes letterIn{to{opacity:1;transform:translateY(0);}}
+  #finale .card{max-height:82vh;overflow-y:auto;}
+  .stats-box{margin-top:26px;text-align:left;background:rgba(255,255,255,0.05);border:1px solid var(--glass-border);border-radius:14px;padding:18px 20px;max-height:280px;overflow-y:auto;}
+  .stats-box div{font-family:'Quicksand',sans-serif;font-size:15px;margin:9px 0;color:var(--cream);padding-bottom:9px;border-bottom:1px dashed rgba(227,189,94,0.18);}
+  .stats-box div:last-child{border-bottom:none;}
+  .stats-box b{color:var(--gold-bright);font-family:'Press Start 2P',monospace;font-size:11px;display:block;margin-bottom:4px;}
+  #finale .card::-webkit-scrollbar, .stats-box::-webkit-scrollbar{width:8px;}
+  #finale .card::-webkit-scrollbar-track, .stats-box::-webkit-scrollbar-track{background:rgba(255,255,255,0.04);border-radius:8px;}
+  #finale .card::-webkit-scrollbar-thumb, .stats-box::-webkit-scrollbar-thumb{background:var(--gold);border-radius:8px;}
+  #finale .card{scrollbar-width:thin;scrollbar-color:var(--gold) rgba(255,255,255,0.04);}
+
+  /* ---------- ACHIEVEMENT TOAST ---------- */
+  #achievement-toast{
+    position:fixed;top:26px;right:-380px;z-index:100;width:320px;
+    background:linear-gradient(135deg, rgba(62,15,30,0.92), rgba(51,20,79,0.92));
+    border:2px solid var(--gold);border-radius:12px;padding:14px 16px;
+    display:flex;align-items:center;gap:12px;
+    box-shadow:0 8px 30px rgba(0,0,0,0.5), 0 0 20px rgba(227,189,94,0.25);
+    transition:right 1s var(--ease-cozy);
+  }
+  #achievement-toast.show{right:20px;}
+  .ach-icon{font-size:30px;filter:drop-shadow(0 0 6px var(--gold-bright));flex-shrink:0;}
+  .ach-text{font-family:'Press Start 2P',monospace;line-height:1.6;}
+  .ach-label{font-size:9px;color:var(--gold);display:block;}
+  .ach-title{font-size:11px;color:var(--white);display:block;margin-top:4px;}
+
+  @media (max-width:480px){
+    .card{padding:32px 22px;}
+    .vault-grid{grid-template-columns:repeat(3,1fr);max-width:320px;}
+    #achievement-toast{width:250px;right:-300px;}
+    #achievement-toast.show{right:10px;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .blob,.sparkle,.card::before{animation:none !important;}
+    .screen,.door,#achievement-toast{transition-duration:.2s !important;}
+  }
+</style>
+</head>
+<body>
+
+<div id="bg">
+  <div class="blob blob1"></div>
+  <div class="blob blob2"></div>
+  <div class="blob blob3"></div>
+  <div class="blob blob4"></div>
+</div>
+
+<div class="watermark">Nev1er — 2026</div>
+<div id="progress-dots">
+  <div class="dot" data-n="1"></div>
+  <div class="dot" data-n="2"></div>
+  <div class="dot" data-n="3"></div>
+  <div class="dot" data-n="4"></div>
+  <div class="dot" data-n="5"></div>
+</div>
+
+<div id="doors">
+  <div class="door left"><span class="door-emblem">✦</span></div>
+  <div class="door right"><span class="door-emblem">✦</span></div>
+</div>
+
+<div id="stage">
+
+  <section id="landing" class="screen active">
+    <div class="card">
+      <span class="eyebrow">A GIFT AWAITS</span>
+      <h1>Complete these trials to get your gift.</h1>
+      <p>Five small trials stand between you and something made just for you. There are no wrong answers here — only yours.</p>
+      <div class="name-field">
+        <label for="nameInput">Enter your name</label>
+        <input type="text" id="nameInput" placeholder="Whoever you are..." autocomplete="off">
+        <div class="hint">(seriously, there's no wrong answer)</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="enterBtn">Enter</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="trial1" class="screen">
+    <div class="card">
+      <span class="eyebrow" id="t1-eyebrow">FOR YOU, TRAVELER</span>
+      <h2>Accept me as your Smart, Handsome, Tall, Rich, Playboy Brother — or call me Lord Never until death.</h2>
+      <p>Choose wisely. Or don't. It genuinely does not matter.</p>
+      <div class="choice-col">
+        <button class="choice-btn" data-c="brother">I accept you, oh Smart, Handsome, Tall, Rich, Playboy Brother.</button>
+        <button class="choice-btn" data-c="lord">All hail Lord Never, until death.</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="trial2" class="screen">
+    <div class="card">
+      <span class="eyebrow">A SIMPLE QUESTION</span>
+      <h2>Will I get a PS5 with your first salary?</h2>
+      <p>Just pick an answer. Both buttons are right there.</p>
+      <div class="duel-zone">
+        <button class="btn" id="yesBtn">Yes 😌</button>
+        <button class="btn" id="noBtn">No</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="trial3" class="screen">
+    <div class="card">
+      <div class="quiz-block">
+        <h3>Rate my cooking.</h3>
+        <div class="stars" id="stars-cooking" data-rating="0">
+          <span class="star" data-v="1">★</span><span class="star" data-v="2">★</span><span class="star" data-v="3">★</span><span class="star" data-v="4">★</span><span class="star" data-v="5">★</span>
+        </div>
+      </div>
+      <div class="quiz-block">
+        <h3>Rate my fashion sense.<span class="break-heart" id="fashionHeart">💔</span></h3>
+        <div class="stars" id="stars-fashion" data-rating="0">
+          <span class="star" data-v="1">★</span><span class="star" data-v="2">★</span><span class="star" data-v="3">★</span><span class="star" data-v="4">★</span><span class="star" data-v="5">★</span>
+        </div>
+      </div>
+      <div class="quiz-block">
+        <h3>Am I annoying to you?</h3>
+        <div class="annoy-row">
+          <button class="btn" data-annoy="1">No</button>
+          <button class="btn" data-annoy="2">No</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="trial4" class="screen">
+    <div class="card">
+      <span class="eyebrow">HOLD ON...</span>
+      <h2 id="loadLabel">Calculating how much I actually love you...</h2>
+      <div class="loadbar-outer"><div class="loadbar-inner" id="loadBar"></div></div>
+      <span id="loadPct">0%</span>
+    </div>
+  </section>
+
+  <section id="trial5" class="screen">
+    <div class="card">
+      <span class="eyebrow">LAST ONE</span>
+      <h2>One of these keys opens the vault. Only one.</h2>
+      <div class="lock-wrap" id="lockIcon">🔒</div>
+      <div class="vault-grid" id="vaultGrid"></div>
+    </div>
+  </section>
+
+  <section id="finale" class="screen">
+    <div class="card">
+      <span class="eyebrow" id="finaleEyebrow">THE GIFT</span>
+      <div class="final-line" id="finalLine"></div>
+      <div class="stats-box" id="statsBox"></div>
+      <div class="btn-row" style="justify-content:center;">
+        <button class="btn" id="replayBtn">Replay the Trials</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div id="achievement-toast">
+  <span class="ach-icon">🏆</span>
+  <span class="ach-text"><span class="ach-label">ACHIEVEMENT UNLOCKED</span><span class="ach-title" id="ach-title-text"></span></span>
+</div>
+
+<div id="jumpscare">
+  <div style="position:relative;">
+    <div class="speech-bubble">I don't!!!</div>
+    <div class="jump-emoji">😂🖕</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- background sparkles ---------------- */
+  const bg = document.getElementById('bg');
+  for(let i=0;i<28;i++){
+    const s = document.createElement('div');
+    s.className='sparkle';
+    const size = 2+Math.random()*3;
+    s.style.width=size+'px';s.style.height=size+'px';
+    s.style.left=Math.random()*100+'%';
+    s.style.top=Math.random()*100+'%';
+    s.style.animationDuration=(3+Math.random()*5)+'s';
+    s.style.animationDelay=(Math.random()*6)+'s';
+    bg.appendChild(s);
+  }
+
+  /* ---------------- audio (synth, no assets) ---------------- */
+  let actx;
+  function ctx(){ if(!actx){ actx = new (window.AudioContext||window.webkitAudioContext)(); } return actx; }
+  function beep(freq, start, dur, vol, type){
+    try{
+      const c = ctx();
+      const o = c.createOscillator();
+      const g = c.createGain();
+      o.type = type||'square';
+      o.frequency.value = freq;
+      g.gain.value = 0;
+      o.connect(g); g.connect(c.destination);
+      const t0 = c.currentTime + start;
+      g.gain.setValueAtTime(0, t0);
+      g.gain.linearRampToValueAtTime(vol||0.05, t0+0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, t0+dur);
+      o.start(t0); o.stop(t0+dur+0.02);
+    }catch(e){}
+  }
+  function playDing(){ beep(880,0,0.12,0.06); beep(1318,0.1,0.18,0.06); }
+  function playClunk(){ beep(120,0,0.15,0.05,'sawtooth'); }
+  function playChime(){ beep(660,0,0.1,0.05); beep(880,0.09,0.1,0.05); beep(1100,0.18,0.22,0.05); }
+
+  /* ---------------- screen transitions ---------------- */
+  const stage = document.getElementById('stage');
+  let current = document.getElementById('landing');
+
+  function goTo(id, cb){
+    const next = document.getElementById(id);
+    if(current === next){ if(cb) cb(); return; }
+    current.classList.add('leaving');
+    setTimeout(()=>{
+      current.classList.remove('active','leaving');
+      current.style.display='none';
+      current = next;
+      current.style.display='block';
+      // force reflow so the enter transition plays
+      void current.offsetWidth;
+      current.classList.add('active');
+      if(cb) cb();
+    }, 700);
+  }
+
+  /* ---------------- progress dots ---------------- */
+  const dotsWrap = document.getElementById('progress-dots');
+  const dots = Array.from(document.querySelectorAll('.dot'));
+  function setProgress(n){ // n = current trial number, 0 = hide, 6 = all done
+    if(n<=0 || n>5){ dotsWrap.classList.remove('show'); return; }
+    dotsWrap.classList.add('show');
+    dots.forEach(d=>{
+      const dn = parseInt(d.dataset.n,10);
+      d.classList.toggle('done', dn<n);
+      d.classList.toggle('current', dn===n);
+    });
+  }
+
+  /* ---------------- achievements ---------------- */
+  const toast = document.getElementById('achievement-toast');
+  const toastTitle = document.getElementById('ach-title-text');
+  let achQueue = [];
+  let achShowing = false;
+  let unlockedAchievements = [];
+
+  function queueAchievement(text){
+    unlockedAchievements.push(text);
+    achQueue.push(text);
+    processQueue();
+  }
+  function processQueue(){
+    if(achShowing || achQueue.length===0) return;
+    achShowing = true;
+    const text = achQueue.shift();
+    toastTitle.textContent = text;
+    playDing();
+    requestAnimationFrame(()=>{
+      toast.classList.add('show'); // slow slide-in (1s, in CSS)
+    });
+    setTimeout(()=>{
+      toast.classList.remove('show'); // slide back out (1s)
+      setTimeout(()=>{
+        achShowing = false;
+        processQueue();
+      }, 650);
+    }, 1000 + 3600); // slow entrance + 3.6s hold before leaving
+  }
+
+  /* ================= LANDING -> DOORS -> TRIAL 1 ================= */
+  const enterBtn = document.getElementById('enterBtn');
+  const nameInput = document.getElementById('nameInput');
+  const doors = document.getElementById('doors');
+  const doorLeft = doors.querySelector('.door.left');
+  const doorRight = doors.querySelector('.door.right');
+
+  enterBtn.addEventListener('click', ()=>{
+    startTime = Date.now();
+    playChime();
+    doors.classList.add('show');
+    void doors.offsetWidth;
+    // fade the landing card out gently under the doors
+    current.classList.add('leaving');
+    setTimeout(()=>{
+      doorLeft.classList.add('open');
+      doorRight.classList.add('open');
+    }, 250);
+    setTimeout(()=>{
+      current.classList.remove('active','leaving');
+      current.style.display='none';
+      current = document.getElementById('trial1');
+      current.style.display='block';
+      void current.offsetWidth;
+      current.classList.add('active');
+      setProgress(1);
+    }, 250+2100);
+    setTimeout(()=>{ doors.classList.remove('show'); doorLeft.classList.remove('open'); doorRight.classList.remove('open'); }, 250+2100+700);
+  });
+
+  /* ================= TRIAL 1 ================= */
+  document.querySelectorAll('#trial1 .choice-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      queueAchievement('Goodddd Girlll');
+      setTimeout(()=>{ goTo('trial2'); setProgress(2); }, 500);
+    });
+  });
+
+  /* ================= TRIAL 2 ================= */
+  const yesBtn = document.getElementById('yesBtn');
+  const noBtn = document.getElementById('noBtn');
+  const duelZone = document.querySelector('.duel-zone');
+  let dodgeCount = 0;
+  let yesScale = 1;
+
+  function dodgeNo(){
+    dodgeCount++;
+    const zoneW = duelZone.clientWidth, zoneH = duelZone.clientHeight;
+    const margin = 60;
+    const newLeft = margin + Math.random()*(zoneW-2*margin);
+    const newTop = margin + Math.random()*(zoneH-2*margin);
+    noBtn.style.left = newLeft+'px';
+    noBtn.style.top = newTop+'px';
+    const shrink = Math.max(0.35, 1 - dodgeCount*0.12);
+    noBtn.style.transform = `translate(-50%,-50%) scale(${shrink})`;
+    noBtn.style.opacity = Math.max(0.35, shrink);
+    yesScale = Math.min(2.1, 1 + dodgeCount*0.18);
+    yesBtn.style.transform = `translate(-50%,-50%) scale(${yesScale})`;
+  }
+  noBtn.addEventListener('mouseenter', dodgeNo);
+  noBtn.addEventListener('touchstart', (e)=>{ e.preventDefault(); dodgeNo(); }, {passive:false});
+  noBtn.addEventListener('click', (e)=>{ e.preventDefault(); dodgeNo(); });
+
+  yesBtn.addEventListener('click', ()=>{
+    goTo('trial3'); setProgress(3);
+  });
+
+  /* ================= TRIAL 3 ================= */
+  function wireStars(containerId, onLocked){
+    const wrap = document.getElementById(containerId);
+    const stars = Array.from(wrap.querySelectorAll('.star'));
+    stars.forEach(s=>{
+      s.addEventListener('click', ()=>{
+        if(wrap.classList.contains('locked')) return;
+        const v = parseInt(s.dataset.v,10);
+        stars.forEach(st=>st.classList.toggle('filled', parseInt(st.dataset.v,10)<=v));
+        wrap.dataset.rating = v;
+        wrap.classList.add('locked');
+        onLocked(v);
+      });
+    });
+  }
+  let cookingRating = 0, fashionRating = 0, annoyChoiceLabel = '';
+  wireStars('stars-cooking', (v)=>{
+    cookingRating = v;
+    if(v<3){ queueAchievement('Starvation is key'); }
+    checkTrial3Done();
+  });
+  wireStars('stars-fashion', (v)=>{
+    fashionRating = v;
+    if(v<3){
+      const heart = document.getElementById('fashionHeart');
+      heart.classList.add('play');
+    }
+    checkTrial3Done();
+  });
+  let annoyAnswered = false;
+  document.querySelectorAll('[data-annoy]').forEach((btn,idx)=>{
+    btn.addEventListener('click', ()=>{
+      annoyAnswered = true;
+      annoyChoiceLabel = idx===0 ? '"No" (the left one)' : '"No" (the other one)';
+      checkTrial3Done();
+    });
+  });
+  function checkTrial3Done(){
+    const cookingDone = document.getElementById('stars-cooking').classList.contains('locked');
+    const fashionDone = document.getElementById('stars-fashion').classList.contains('locked');
+    if(cookingDone && fashionDone && annoyAnswered){
+      setTimeout(()=>{ goTo('trial4'); setProgress(4); startLoading(); }, 550);
+    }
+  }
+
+  /* ================= TRIAL 4 : fake loading ================= */
+  const loadBar = document.getElementById('loadBar');
+  const loadPct = document.getElementById('loadPct');
+  const loadLabel = document.getElementById('loadLabel');
+  let loadingStarted = false;
+
+  function startLoading(){
+    if(loadingStarted) return;
+    loadingStarted = true;
+    let pct = 0;
+    loadBar.style.width='0%'; loadPct.textContent='0%';
+    const totalDurationMs = 23000; // slow climb to 99
+    const startT = Date.now();
+    function tick(){
+      const elapsed = Date.now()-startT;
+      // ease toward 99, never reaching it via formula, then clamp
+      let target = 99*(1-Math.exp(-elapsed/9000));
+      pct = Math.min(99, Math.round(target));
+      loadBar.style.width = pct+'%';
+      loadPct.textContent = pct+'%';
+      if(pct<99 && elapsed<totalDurationMs){
+        requestAnimationFrame(tick);
+      } else {
+        loadBar.style.width='99%'; loadPct.textContent='99%';
+        loadLabel.textContent='Calculating how much I actually love you... (almost there)';
+        setTimeout(triggerJumpscare, 9000); // stall on 99
+      }
+    }
+    requestAnimationFrame(tick);
+  }
+
+  const jumpscare = document.getElementById('jumpscare');
+  function triggerJumpscare(){
+    jumpscare.classList.add('show');
+    beep(200,0,0.06,0.05,'square');
+    beep(60,0.05,0.2,0.07,'square');
+    setTimeout(()=>{
+      jumpscare.classList.remove('show');
+      // skip straight past 100 to trial 5
+      goTo('trial5'); setProgress(5); buildVault();
+    }, 5300);
+  }
+
+  /* ================= TRIAL 5 : vault ================= */
+  const vaultGrid = document.getElementById('vaultGrid');
+  const lockIcon = document.getElementById('lockIcon');
+  let vaultBuilt = false;
+  let wrongKeyAttempts = 0;
+
+  function buildVault(){
+    if(vaultBuilt) return;
+    vaultBuilt = true;
+    const totalKeys = 12;
+    const correctIndex = Math.floor(Math.random()*totalKeys);
+    vaultGrid.innerHTML='';
+    for(let i=0;i<totalKeys;i++){
+      const b = document.createElement('button');
+      b.className='key-btn';
+      b.textContent='🔑';
+      b.addEventListener('click', ()=>{
+        if(b.classList.contains('correct')) return;
+        if(i===correctIndex){
+          document.querySelectorAll('.key-btn').forEach(k=>k.style.pointerEvents='none');
+          b.classList.add('correct');
+          lockIcon.textContent='🔓';
+          lockIcon.classList.add('unlocked');
+          playChime();
+          queueAchievement('Master Locksmith');
+          setTimeout(()=>{ goTo('finale'); setProgress(0); runFinale(); }, 1600);
+        } else {
+          wrongKeyAttempts++;
+          b.classList.remove('wrong'); void b.offsetWidth;
+          b.classList.add('wrong');
+          playClunk();
+        }
+      });
+      vaultGrid.appendChild(b);
+    }
+  }
+
+  /* ================= FINALE ================= */
+  let startTime = Date.now();
+  const finalLine = document.getElementById('finalLine');
+  const statsBox = document.getElementById('statsBox');
+
+  function runFinale(){
+    const text = "I love you all!";
+    finalLine.innerHTML = text.split('').map((ch,i)=>
+      `<span style="animation-delay:${0.35+i*0.06}s">${ch===' '?'&nbsp;':ch}</span>`
+    ).join('');
+
+    setTimeout(()=>{ queueAchievement('Immense Love'); }, 900);
+
+    const elapsedMs = Date.now()-startTime;
+    const mins = Math.floor(elapsedMs/60000);
+    const secs = Math.floor((elapsedMs%60000)/1000);
+    const uniqueAch = Array.from(new Set(unlockedAchievements));
+    const nameVal = (nameInput.value || 'Mystery Guest').trim();
+    const cookLine = cookingRating>0 ? `${cookingRating} / 5 star${cookingRating===1?'':'s'} ${cookingRating<3?'(brutal, honestly)':cookingRating===5?'(a five-star lie, but I\'ll take it)':'(fair enough)'}` : '— skipped, coward';
+    const fashLine = fashionRating>0 ? `${fashionRating} / 5 star${fashionRating===1?'':'s'} ${fashionRating<3?'(my heart is still on the floor)':'(my ego survives another day)'}` : '— skipped, coward';
+    const keyLine = wrongKeyAttempts===0 ? 'First try. Suspiciously lucky.' : `${wrongKeyAttempts} wrong key${wrongKeyAttempts===1?'':'s'} before the right one`;
+    const dodgeLine = dodgeCount===0 ? 'Went straight for Yes. Respect.' : `Chased the "No" button ${dodgeCount} time${dodgeCount===1?'':'s'} before giving up`;
+    setTimeout(()=>{
+      statsBox.innerHTML = `
+        <div><b>PLAYER</b>${nameVal}</div>
+        <div><b>TRIALS COMPLETED</b>5 / 5</div>
+        <div><b>ACHIEVEMENTS UNLOCKED</b>${uniqueAch.length} total — ${uniqueAch.join(' · ')}</div>
+        <div><b>YOUR COOKING RATING</b>${cookLine}</div>
+        <div><b>YOUR FASHION RATING</b>${fashLine}</div>
+        <div><b>ANNOYANCE VERDICT</b>You picked ${annoyChoiceLabel || '"No"'} — the correct answer, apparently</div>
+        <div><b>"NO" BUTTON INCIDENT</b>${dodgeLine}</div>
+        <div><b>VAULT ATTEMPTS</b>${keyLine}</div>
+        <div><b>PATIENCE DURING 99%</b>Held strong through a jumpscare and everything</div>
+        <div><b>TIME "WASTED"</b>${mins}m ${secs}s — worth every second</div>
+        <div><b>OFFICIAL VERDICT</b>Certified loved. No takebacks.</div>
+      `;
+    }, 1200);
+  }
+
+  document.getElementById('replayBtn').addEventListener('click', ()=>{
+    // reset state
+    document.querySelectorAll('.stars').forEach(s=>{ s.classList.remove('locked'); s.dataset.rating=0; s.querySelectorAll('.star').forEach(st=>st.classList.remove('filled')); });
+    document.getElementById('fashionHeart').classList.remove('play');
+    annoyAnswered = false;
+    cookingRating = 0; fashionRating = 0; annoyChoiceLabel = '';
+    dodgeCount = 0; yesScale = 1;
+    noBtn.style = ''; yesBtn.style = '';
+    loadingStarted = false;
+    vaultBuilt = false;
+    wrongKeyAttempts = 0;
+    unlockedAchievements = [];
+    document.querySelectorAll('.key-btn').forEach(k=>k.style.pointerEvents='');
+    lockIcon.textContent='🔒'; lockIcon.classList.remove('unlocked');
+    nameInput.value='';
+    goTo('landing');
+  });
+
+})();
+</script>
+</body>
+</html>
